@@ -1,7 +1,0 @@
-tabsdata
-typer
-Rich
-Textual
-InquirerPy
-yaspin
-psutil

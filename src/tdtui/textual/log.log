@@ -91,7 +91,7 @@ Traceback (most recent call last):
   File "/Users/danieladayev/tabsdata-tui/tdtui/src/tdtui/textual/task_screen.py", line 129, in run_single_task
     await task.func(task.description)
   File "/Users/danieladayev/tabsdata-tui/tdtui/src/tdtui/textual/task_screen.py", line 173, in prepare_instance
-    logging.info("a: " + self.app.port_selection["status"])
+    logging.info("a: " + self.app.instance_start_configuration["status"])
                          ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
 KeyError: 'status'
 {'name': None, 'external_port': None, 'internal_port': None, 'status': 'Not Running'}

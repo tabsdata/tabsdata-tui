@@ -3,7 +3,7 @@ from textual.screen import Screen
 from textual.widgets import ListView, ListItem, Label, Static
 from pathlib import Path
 from tdtui.textual.api_processor import process_response
-from tdtui.core.find_instances import main as find_instances
+from tdtui.core.find_instances import pull_all_tabsdata_instance_data as find_instances
 import logging
 from typing import Optional, Dict, Any, List
 from textual.containers import VerticalScroll
@@ -36,7 +36,7 @@ from textual.widgets import Input, Label, Static, Footer
 from textual.containers import Vertical, VerticalScroll
 from rich.text import Text
 
-from tdtui.core.find_instances import main as find_instances
+from tdtui.core.find_instances import pull_all_tabsdata_instance_data as find_instances
 import logging
 from pathlib import Path
 
@@ -90,13 +90,13 @@ class InstanceWidget(Static):
             status_line = f"Create a New Instance"
             line1 = f""
             line2 = f""
-            self.app.port_selection["status"] = "Running"
+            self.app.instance_start_configuration["status"] = "Running"
         elif status == "Running":
             status_color = "#22c55e"
             status_line = f"{name}  ● Running"
             line1 = f"running on → ext: {arg_ext}"
             line2 = f"running on → int: {arg_int}"
-            self.app.port_selection["status"] = "Running"
+            self.app.instance_start_configuration["status"] = "Running"
         elif status is None:
             status_color = "#e4e4e6"
             status_line = f"○ No Instance Selected"
@@ -168,8 +168,8 @@ class ScreenTemplate(Screen):
         self.header = header
 
     def compose(self) -> ComposeResult:
-        logging.info(self.app.port_selection)
-        instance = self.app.port_selection.get("name")
+        logging.info(self.app.instance_start_configuration)
+        instance = self.app.instance_start_configuration.get("name")
         logging.info(f"instance chosen is {instance} at type {type(instance)}")
         with VerticalScroll():
             if self.header is not None:
@@ -317,7 +317,7 @@ class PortConfigScreen(Screen):
       app.selected_instance_name
       app.selected_external_port
       app.selected_internal_port
-      app.port_selection (dict)
+      app.instance_start_configuration (dict)
     """
 
     CSS = """
@@ -561,11 +561,11 @@ class PortConfigScreen(Screen):
         app.selected_instance_name = self.selected_instance_name
         app.selected_external_port = self.external_port
         app.selected_internal_port = self.internal_port
-        app.port_selection["name"] = self.selected_instance_name
-        app.port_selection["external_port"] = self.external_port
-        app.port_selection["internal_port"] = self.internal_port
-        app.port_selection["status"] = self.status
-        logging.info(app.port_selection)
+        app.instance_start_configuration["name"] = self.selected_instance_name
+        app.instance_start_configuration["external_port"] = self.external_port
+        app.instance_start_configuration["internal_port"] = self.internal_port
+        app.instance_start_configuration["status"] = self.status
+        logging.info(app.instance_start_configuration)
         process_response(self)
 
 
@@ -706,28 +706,28 @@ class TaskScreen(SequentialTasksScreenTemplate):
             TaskSpec("Connecting to Tabsdata instance", self.connect_tabsdata),
             TaskSpec("Checking Server Status", self.run_tdserver_status),
         ]
-        # self.app.port_selection = {
+        # self.app.instance_start_configuration = {
         #     "name": "tabsdata",
         #     "external_port": 2457,
         #     "internal_port": 2458,
         #     "status": "Running",
         # }
-        self.instance_name = self.app.port_selection["name"]
-        self.ext_port = self.app.port_selection["external_port"]
-        self.int_port = self.app.port_selection["internal_port"]
+        self.instance_name = self.app.instance_start_configuration["name"]
+        self.ext_port = self.app.instance_start_configuration["external_port"]
+        self.int_port = self.app.instance_start_configuration["internal_port"]
         super().__init__(tasks)
 
     async def prepare_instance(self, label=None):
-        logging.info("a: " + self.app.port_selection["status"])
-        logging.info(f"b: {self.app.port_selection}")
+        logging.info("a: " + self.app.instance_start_configuration["status"])
+        logging.info(f"b: {self.app.instance_start_configuration}")
         logging.info(
             f"c: {[
             i["name"]
             for i in find_instances()
-            if i["name"] == self.app.port_selection["name"]
+            if i["name"] == self.app.instance_start_configuration["name"]
         ]}"
         )
-        if self.app.port_selection["status"] == "Running":
+        if self.app.instance_start_configuration["status"] == "Running":
             self.log_line(label, "STOP SERVER")
             process = await asyncio.create_subprocess_exec(
                 "tdserver",
@@ -737,10 +737,10 @@ class TaskScreen(SequentialTasksScreenTemplate):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
             )
-        elif self.app.port_selection["name"] not in [
+        elif self.app.instance_start_configuration["name"] not in [
             i["name"]
             for i in find_instances()
-            if i["name"] == self.app.port_selection["name"]
+            if i["name"] == self.app.instance_start_configuration["name"]
         ]:
             self.log_line(label, "START SERVER")
             process = await asyncio.create_subprocess_exec(

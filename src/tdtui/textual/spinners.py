@@ -21,17 +21,3 @@ class SpinnerWidget(Static):
 
     def update_spinner(self) -> None:
         self.update(self._spinner)
-
-
-class MyApp(App[None]):
-    BINDINGS = [
-        ("ctrl+c", "quit", "Quit"),
-        ("ctrl+b", "go_back", "Go Back"),
-    ]
-
-    def compose(self) -> ComposeResult:
-        yield SpinnerWidget()
-
-
-if __name__ == "__main__":
-    MyApp().run()

@@ -12,7 +12,7 @@ from textual.widgets import Footer
 def process_response(screen: Screen, label=None):
     from tdtui.textual.textual_instance_config import PortConfigScreen
     from tdtui.textual.task_screen import TaskScreen as InstanceStartup
-    from tdtui.textual.textual_simple import InstanceSelectionScreen
+    from tdtui.app import InstanceSelectionScreen
 
     app = screen.app
     screen_name = type(app.screen).__name__

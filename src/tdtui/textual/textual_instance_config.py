@@ -8,7 +8,7 @@ from textual.widgets import Input, Label, Static, Footer
 from textual.containers import Vertical, VerticalScroll
 from rich.text import Text
 
-from tdtui.core.find_instances import main as find_instances
+from tdtui.core.find_instances import pull_all_tabsdata_instance_data as find_instances
 import logging
 from pathlib import Path
 from textual import events

@@ -5,6 +5,31 @@ from tdtui.core.yaml_getter_setter import (
     get_yaml_value,
 )
 import psutil
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional, Dict, List, Union
+
+
+@dataclass
+class TabsdataInstance:
+    name: str
+    pid: Optional[str]
+    status: str
+    cfg_ext: Optional[str]
+    cfg_int: Optional[str]
+    arg_ext: Optional[str]
+    arg_int: Optional[str]
+
+    def to_dict(self) -> Dict[str, str | None]:
+        return {
+            "name": self.name,
+            "pid": self.pid,
+            "status": self.status,
+            "cfg_ext": self.cfg_ext,
+            "cfg_int": self.cfg_int,
+            "arg_ext": self.arg_ext,
+            "arg_int": self.arg_int,
+        }
 
 
 def define_root(*parts):
@@ -28,7 +53,7 @@ def define_root(*parts):
     return root
 
 
-def find_tabsdata_instances():
+def find_tabsdata_instance_names():
     root = define_root("instances")
     matches = []
 
@@ -79,7 +104,7 @@ def find_sockets(instance_name: str, pid=None):
             "cfg_int": cfg_int,
             "arg_ext": arg_ext,
             "arg_int": arg_int,
-            "status": status
+            "status": status,
         }
     else:
         # if no process, then not running
@@ -110,22 +135,49 @@ def find_sockets(instance_name: str, pid=None):
     }
 
 
-def main():
-    instance_store = []
-    instance_names = find_tabsdata_instances()
-    for i in instance_names:
-        instance_dict = {}
-        pid = find_instance_pid(i)
-        sockets = find_sockets(i, pid)
+def instance_name_to_tabsdata_instance(instance_name: str):
+    available_instances = find_tabsdata_instance_names()
+    if instance_name not in available_instances:
+        raise ValueError(f"No Tabsdata instance exists with name '{instance_name}'")
+    pid = find_instance_pid(instance_name)
+    sockets = find_sockets(instance_name, pid)
 
-        instance_dict["name"] = i
-        instance_dict["pid"] = pid
-        instance_dict.update(sockets)
-        instance_store.append(instance_dict)
-    return instance_store
+    return TabsdataInstance(
+        name=instance_name,
+        pid=pid,
+        status=sockets["status"],
+        cfg_ext=sockets["cfg_ext"],
+        cfg_int=sockets["cfg_int"],
+        arg_ext=sockets["arg_ext"],
+        arg_int=sockets["arg_int"],
+    )
 
 
-if __name__ == "__main__":
-    x = main()
-    for i in x:
-        print(i)
+def pull_all_tabsdata_instance_data() -> list[TabsdataInstance]:
+    instances: list[TabsdataInstance] = []
+    for name in find_tabsdata_instance_names():
+        pid = find_instance_pid(name)
+        sockets = find_sockets(name, pid)
+
+        instances.append(instance_name_to_tabsdata_instance(name))
+    return instances
+
+
+def convert_instance_name_to_TabsdataInstance(
+    target: Union[str, TabsdataInstance],
+    all_instances: Optional[List[TabsdataInstance]] = None,
+) -> TabsdataInstance:
+    if all_instances is None:
+        all_instances = pull_all_tabsdata_instance_data()
+
+    if isinstance(target, TabsdataInstance):
+        pass
+    elif isinstance(target, str):
+        for inst in all_instances:
+            if inst.name == target:
+                target = inst
+                break
+    else:
+        raise TypeError(
+            f"Expected name to be a string or TabsdataInstance object, got {type(name).__name__}"
+        )

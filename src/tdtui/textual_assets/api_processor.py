@@ -7,24 +7,31 @@ import logging
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.widgets import Footer
+from tdtui.textual_assets.textual_screens import (
+    PortConfigScreen,
+    TaskScreen,
+    GettingStartedScreen,
+    InstanceManagementScreen,
+    MainScreen,
+    InstanceSelectionScreen,
+)
 
 
 def process_response(screen: Screen, label=None):
-    from tdtui.textual.textual_instance_config import PortConfigScreen
-    from tdtui.textual.task_screen import TaskScreen as InstanceStartup
-    from tdtui.app import InstanceSelectionScreen
-
     app = screen.app
     screen_name = type(app.screen).__name__
-    if label == "Instance Management":
+
+    if label == "_mount":
+        app.push_screen(GettingStartedScreen())
+    elif label == "Instance Management":
         pass
-    if label == "Bind An Instance":
+    elif label == "Bind An Instance":
         app.push_screen(InstanceSelectionScreen())
-    if screen_name == "InstanceSelectionScreen":
+    elif screen_name == "InstanceSelectionScreen":
         app.instance_name = label
         app.push_screen(PortConfigScreen())
-    if screen_name == "PortConfigScreen":
+    elif screen_name == "PortConfigScreen":
         app.push_screen(InstanceStartup())
-    if screen_name == "GettingStartedScreen" and label == "Exit":
+    elif screen_name == "GettingStartedScreen" and label == "Exit":
         app.exit()
     return

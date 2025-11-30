@@ -1,8 +1,9 @@
+from __future__ import annotations
 from textual.app import App, ComposeResult
 from textual.screen import Screen
 from textual.widgets import ListView, ListItem, Label, Static
 from pathlib import Path
-from tdtui.textual.api_processor import process_response
+
 from tdtui.core.find_instances import pull_all_tabsdata_instance_data as find_instances
 import logging
 from typing import Optional, Dict, Any, List
@@ -20,14 +21,11 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.widgets import Footer
 
-from tdtui.textual.textual_instance_config import PortConfigScreen
-
 from textual.app import App, ComposeResult
 from textual.screen import Screen
 from textual.containers import Horizontal, VerticalScroll
 from textual.widgets import Static
 
-from __future__ import annotations
 
 from typing import Optional, Dict, Any, List
 
@@ -169,7 +167,6 @@ class ScreenTemplate(Screen):
         self.header = header
 
     def compose(self) -> ComposeResult:
-        logging.info(self.app.instance_start_configuration)
         instance = self.app.instance_start_configuration.get("name")
         logging.info(f"instance chosen is {instance} at type {type(instance)}")
         with VerticalScroll():
@@ -189,7 +186,7 @@ class ScreenTemplate(Screen):
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         selected = event.item.label
         logging.info(type(self.screen).__name__)
-        process_response(self, selected)  # push instance
+        self.app.handle_api_response(self, selected)  # push instance
 
 
 class InstanceSelectionScreen(Screen):
@@ -223,7 +220,7 @@ class InstanceSelectionScreen(Screen):
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         selected = event.item.label
         logging.info(type(self.screen).__name__)
-        process_response(self, selected)  # push instance
+        self.app.handle_api_response(self, selected)  # push instance
 
 
 class MainScreen(ScreenTemplate):
@@ -306,7 +303,7 @@ class PortConfigScreen(Screen):
         logging.info(self.virtual_size)
 
         # import here to avoid circulars if needed
-        from tdtui.app import CurrentInstanceWidget
+        from tdtui.app_start import CurrentInstanceWidget
 
         yield VerticalScroll(
             CurrentInstanceWidget(self.instance_name),
@@ -461,7 +458,6 @@ class PortConfigScreen(Screen):
     # ---------------------------
 
     def _handle_internal_submitted(self, int_input: Input) -> None:
-        from tdtui.textual.api_processor import process_response
 
         int_error = self.query_one("#int-error", Label)
         int_confirm = self.query_one("#int-confirm", Label)
@@ -518,7 +514,7 @@ class PortConfigScreen(Screen):
         app.instance_start_configuration["internal_port"] = self.internal_port
         app.instance_start_configuration["status"] = self.status
         logging.info(app.instance_start_configuration)
-        process_response(self)
+        self.app.handle_api_response(self)
 
 
 @dataclass
@@ -604,7 +600,7 @@ class SequentialTasksScreenTemplate(Screen):
         asyncio.create_task(self.run_tasks())
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
-        from tdtui.app import GettingStartedScreen
+        from tdtui.app_start import GettingStartedScreen
 
         if event.button.id == "close-btn":
             active_screen = self.app.screen

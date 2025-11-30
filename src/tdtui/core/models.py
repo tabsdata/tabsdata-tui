@@ -18,3 +18,13 @@ class Instance(Base):
     cfg_int = Column(String, nullable=True)
     arg_ext = Column(String, nullable=True)
     arg_int = Column(String, nullable=True)
+
+
+class ApiResponse(Base):
+    __tablename__ = "api_responses"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, unique=True, nullable=False)
+    screen = Column(String, unique=False, nullable=True)
+    label = Column(String, unique=False, nullable=True)
+    priority = Column(Integer, unique=False, nullable=True)

@@ -10,8 +10,6 @@ from tdtui.core.td_dataclasses import TabsdataInstance, FieldChange
 from pathlib import Path
 from typing import Optional, Dict, List, Union
 from tdtui.core.models import Instance
-from tdtui.core.db import start_session
-from tdtui.core.db import start_session
 
 
 def define_root(*parts):
@@ -155,14 +153,21 @@ def instance_name_to_instance(instance_name: str) -> Instance:
     )
 
 
-def sync_filesystem_instances_to_db(app) -> list[Instance]:
+def sync_filesystem_instances_to_db(app=None, session=None) -> list[Instance]:
     """
     Sync filesystem state into the DB using ORM models created by instance_name_to_instance.
     Returns the ORM models from the DB after upsert.
     """
+    if session is not None:
+        pass
+    elif hasattr(app, "session"):
+        session = app.session
+    else:
+        raise TypeError(f"Expected either an app or session to be provided")
+
     instance_names = find_tabsdata_instance_names()
 
-    with app as session:
+    with session as session:
         for name in instance_names:
             # Instance from filesystem only
             fs_instance = instance_name_to_instance(name)

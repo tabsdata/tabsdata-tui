@@ -37,7 +37,8 @@ def get_running_ports(screen) -> List[Dict[str, Any]]:
     Returns a list of dicts for running instances, each with:
       name, status, external_port, internal_port
     """
-    instances
+    instances = find_instances()
+    running = []
 
     for inst in instances:
         status = inst.get("status")

@@ -146,7 +146,6 @@ class CurrentInstanceWidget(InstanceWidget):
 
 
 class LabelItem(ListItem):
-
     def __init__(self, label: str, override_label=None) -> None:
         super().__init__()
         if type(label) == str:

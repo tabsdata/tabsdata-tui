@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Optional, Dict, List, Union
 from tdtui.core.models import Instance
 from tdtui.core.db import start_session
+from tdtui.core.db import start_session
 
 
 def define_root(*parts):
@@ -181,6 +182,10 @@ def sync_filesystem_instances_to_db(app) -> list[Instance]:
                 db_instance.arg_ext = fs_instance.arg_ext
                 db_instance.arg_int = fs_instance.arg_int
 
+        session.query(Instance).filter(~Instance.name.in_(instance_names)).delete(
+            synchronize_session=False
+        )
+
         session.commit()
 
         # Return database versions of instances
@@ -205,10 +210,8 @@ def query_session(session, model, limit=None, *conditions, **filters):
     return query.all()
 
 
-from tdtui.core.db import start_session
-
-session = start_session()
-sync_filesystem_instances_to_db(session)
-x = query_session(session, Instance, status="Running")
-for inst in x:
-    print({c.name: getattr(inst, c.name) for c in inst.__table__.columns})
+# session = start_session()
+# sync_filesystem_instances_to_db(session)
+# x = query_session(session, Instance, status="Running")
+# for inst in x:
+#     print({c.name: getattr(inst, c.name) for c in inst.__table__.columns})

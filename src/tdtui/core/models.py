@@ -12,6 +12,7 @@ class Instance(Base):
     name = Column(String, unique=True, nullable=False)
 
     pid = Column(String, nullable=True)
+    working = Column(Boolean, nullable=False, default=False)
     status = Column(String, nullable=False)
     cfg_ext = Column(String, nullable=True)
     cfg_int = Column(String, nullable=True)

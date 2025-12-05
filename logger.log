@@ -3618,3 +3618,59 @@ Traceback (most recent call last):
     ^^^^^^^^^^^^
 AttributeError: 'NoneType' object has no attribute 'focus'
 MainScreen
+{'name': 'testing745', 'pid': '64513', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:1111', 'cfg_int': '127.0.0.1:2222', 'arg_ext': '1111', 'arg_int': '2222', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'testing456', 'pid': '5371', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:2345', 'cfg_int': '127.0.0.1:8876', 'arg_ext': '2345', 'arg_int': '8876', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'f', 'pid': '63817', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:5566', 'cfg_int': '127.0.0.1:7889', 'arg_ext': '5566', 'arg_int': '7889', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'tabsdata', 'pid': '7232', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:4477', 'cfg_int': '127.0.0.1:8877', 'arg_ext': '4477', 'arg_int': '8877', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'testing', 'pid': '60851', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:4466', 'cfg_int': '127.0.0.1:3344', 'arg_ext': '4466', 'arg_int': '3344', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'salesforce', 'pid': '1063', 'working': False, 'status': 'Running', 'cfg_ext': '127.0.0.1:2457', 'cfg_int': '127.0.0.1:2458', 'arg_ext': '2457', 'arg_int': '2458', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+MainScreen
+{'name': 'testing745', 'pid': '64513', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:1111', 'cfg_int': '127.0.0.1:2222', 'arg_ext': '1111', 'arg_int': '2222', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'testing456', 'pid': '5371', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:2345', 'cfg_int': '127.0.0.1:8876', 'arg_ext': '2345', 'arg_int': '8876', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'f', 'pid': '63817', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:5566', 'cfg_int': '127.0.0.1:7889', 'arg_ext': '5566', 'arg_int': '7889', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'tabsdata', 'pid': '7232', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:4477', 'cfg_int': '127.0.0.1:8877', 'arg_ext': '4477', 'arg_int': '8877', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'testing', 'pid': '60851', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:4466', 'cfg_int': '127.0.0.1:3344', 'arg_ext': '4466', 'arg_int': '3344', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'salesforce', 'pid': '1063', 'working': False, 'status': 'Running', 'cfg_ext': '127.0.0.1:2457', 'cfg_int': '127.0.0.1:2458', 'arg_ext': '2457', 'arg_int': '2458', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+MainScreen
+InstanceManagementScreen
+Starting setup tasks…
+[spring_green2][Preparing Instance]:[/] Starting
+[spring_green2][Preparing Instance]:[/] No server preparation steps required (status=Not Running).
+[spring_green2][Preparing Instance]:[/] Finished
+[magenta][Binding Ports]:[/] Starting
+[magenta][Binding Ports]:[/] Updating port config at /Users/danieladayev/.tabsdata/instances/testing745/workspace/config/proc/regular/apiserver/config/config.yaml
+[magenta][Binding Ports]:[/] Set external port -> Successfully set 127.0.0.1:1111 on addresses
+[magenta][Binding Ports]:[/] Set internal port -> Successfully set 127.0.0.1:2222 on internal_addresses
+[magenta][Binding Ports]:[/] Finished
+[yellow1][Connecting to Tabsdata instance]:[/] Starting
+[yellow1][Connecting to Tabsdata instance]:[/] Starting Tabsdata server...
+[yellow1][Connecting to Tabsdata instance]:[/] Running: tdserver start --instance testing745
+[yellow1][Connecting to Tabsdata instance]:[/] 2025-12-05T22:34:55.687868Z  INFO td_supervisor::services::tdserver: Setting up and launching instance...
+[yellow1][Connecting to Tabsdata instance]:[/] 2025-12-05T22:34:55.688100Z  WARN td_supervisor::services::tdserver: The instance is not up to date. An upgrade is required before starting.
+[yellow1][Connecting to Tabsdata instance]:[/] 2025-12-05T22:34:55.688103Z  WARN td_supervisor::services::tdserver: To upgrade, run: 'tdserver upgrade --instance <instance>'.
+[yellow1][Connecting to Tabsdata instance]:[/] 2025-12-05T22:34:55.688105Z  WARN td_supervisor::services::tdserver: (or just 'tdserver upgrade' to upgrade the default instance.)
+[yellow1][Connecting to Tabsdata instance]:[/] 2025-12-05T22:34:55.688106Z  WARN td_supervisor::services::tdserver: For a dry run before upgrading, use: 'tdserver upgrade --instance <instance>'.
+[yellow1][Connecting to Tabsdata instance]:[/] 2025-12-05T22:34:55.688108Z  WARN td_supervisor::services::tdserver: (or just 'tdserver upgrade' for the default instance.)
+[yellow1][Connecting to Tabsdata instance]:[/] 2025-12-05T22:34:55.688109Z  WARN td_supervisor::services::tdserver: It is strongly recommended to back up your instance before proceeding with the upgrade.
+[yellow1][Connecting to Tabsdata instance]:[/] Exited with code 201
+[yellow1][Connecting to Tabsdata instance]:[/] Start command exited with code 201
+[yellow1][Connecting to Tabsdata instance]:[/] Finished
+[magenta][Checking Server Status]:[/] Starting
+[magenta][Checking Server Status]:[/] Checking Tabsdata server status...
+[magenta][Checking Server Status]:[/] Running: tdserver status --instance testing745
+[magenta][Checking Server Status]:[/] 2025-12-05T22:34:55.973935Z  INFO td_supervisor::services::tdserver: 
+[magenta][Checking Server Status]:[/] 
+[magenta][Checking Server Status]:[/] Tabsdata instance '/Users/danieladayev/.tabsdata/instances/testing745' not running: '(NotRunning { pid: 64435 }, None)'
+[magenta][Checking Server Status]:[/] 
+[magenta][Checking Server Status]:[/] Exited with code 0
+[magenta][Checking Server Status]:[/] Status command exited with code 0
+[magenta][Checking Server Status]:[/] Updating working instance record in the database...
+[magenta][Checking Server Status]:[/] Finished
+🎉 All tasks complete.
+Task exception was never retrieved
+future: <Task finished name='Task-479' coro=<SequentialTasksScreenTemplate.run_tasks() done, defined at /Users/danieladayev/test-tui/tabsdata-tui/src/tdtui/textual_assets/textual_screens.py:749> exception=AttributeError("'NoneType' object has no attribute 'focus'")>
+Traceback (most recent call last):
+  File "/Users/danieladayev/test-tui/tabsdata-tui/src/tdtui/textual_assets/textual_screens.py", line 764, in run_tasks
+    button.focus()
+    ^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'focus'

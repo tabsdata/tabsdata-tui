@@ -5,6 +5,12 @@ from tdtui.core.yaml_getter_setter import (
     get_yaml_value,
 )
 import psutil
+from dataclasses import dataclass
+from tdtui.core.td_dataclasses import TabsdataInstance, FieldChange
+from pathlib import Path
+from typing import Optional, Dict, List, Union
+from tdtui.core.models import Instance
+from textual.app import App
 
 
 def define_root(*parts):
@@ -28,7 +34,7 @@ def define_root(*parts):
     return root
 
 
-def find_tabsdata_instances():
+def find_tabsdata_instance_names():
     root = define_root("instances")
     matches = []
 
@@ -79,7 +85,7 @@ def find_sockets(instance_name: str, pid=None):
             "cfg_int": cfg_int,
             "arg_ext": arg_ext,
             "arg_int": arg_int,
-            "status": status
+            "status": status,
         }
     else:
         # if no process, then not running
@@ -110,22 +116,143 @@ def find_sockets(instance_name: str, pid=None):
     }
 
 
-def main():
-    instance_store = []
-    instance_names = find_tabsdata_instances()
-    for i in instance_names:
-        instance_dict = {}
-        pid = find_instance_pid(i)
-        sockets = find_sockets(i, pid)
+from tdtui.core.models import Instance as InstanceRow  # avoid name clash
 
-        instance_dict["name"] = i
-        instance_dict["pid"] = pid
-        instance_dict.update(sockets)
-        instance_store.append(instance_dict)
-    return instance_store
+from tdtui.core.models import Instance  # ORM model
 
 
-if __name__ == "__main__":
-    x = main()
-    for i in x:
-        print(i)
+def instance_name_to_instance(instance_name: str) -> Instance:
+    """
+    Build an Instance ORM object from filesystem state only.
+    Does NOT interact with the database.
+    """
+    available_instances = find_tabsdata_instance_names()
+    if instance_name not in available_instances and instance_name == "_Create_Instance":
+        return Instance(
+            name=instance_name,
+            status="Not Created",
+            cfg_ext="2457",
+            cfg_int="2458",
+            arg_ext="2457",
+            arg_int="2458",
+            public_ip="127.0.0.1",
+            private_ip="127.0.0.1",
+        )
+
+    pid = find_instance_pid(instance_name)
+    sockets = find_sockets(instance_name, pid)
+    split_public_socket = sockets["arg_ext"].split(":")
+    split_private_socket = sockets["arg_int"].split(":")
+    public_ip = split_public_socket[0]
+    public_port = split_public_socket[-1]
+    private_ip = split_private_socket[0]
+    private_port = split_private_socket[-1]
+
+    return Instance(
+        name=instance_name,
+        pid=pid,
+        status=sockets["status"],
+        cfg_ext=sockets["cfg_ext"],
+        cfg_int=sockets["cfg_int"],
+        arg_ext=public_port,
+        arg_int=private_port,
+        public_ip=public_ip,
+        private_ip=private_ip,
+    )
+
+
+def sync_filesystem_instances_to_db(app=None, session=None) -> list[Instance]:
+    """
+    Sync filesystem state into the DB using ORM models created by instance_name_to_instance.
+    Returns the ORM models from the DB after upsert.
+    """
+    if session is not None:
+        pass
+    elif hasattr(app, "session"):
+        session = app.session
+    else:
+        raise TypeError(f"Expected either an app or session to be provided")
+
+    instance_names = find_tabsdata_instance_names()
+
+    with session as session:
+        working_instance = session.query(Instance).filter_by(working=True).first()
+        for name in instance_names:
+            # Instance from filesystem only
+            fs_instance = instance_name_to_instance(name)
+            if (
+                working_instance is not None
+                and fs_instance.name == working_instance.name
+            ):
+                fs_instance.working = True
+
+            # Try to find existing record in DB
+            db_instance = session.query(Instance).filter_by(name=name).first()
+
+            if db_instance is None:
+                # Create if not found
+                session.add(fs_instance)
+            else:
+                session.merge(fs_instance)
+
+        session.query(Instance).filter(~Instance.name.in_(instance_names)).delete(
+            synchronize_session=False
+        )
+
+        session.commit()
+
+        # Return database versions of instances
+        instances_in_db = session.query(Instance).order_by(Instance.name).all()
+
+    return instances_in_db
+
+
+from sqlalchemy import and_, or_
+
+
+def query_session(session, model, limit=None, *conditions, **filters):
+    query = session.query(model)
+    if filters:
+        query = query.filter_by(**filters)
+    if conditions:
+        query = query.filter(*conditions)
+
+    if limit is not None:
+        query = query.limit(limit)
+
+    if query.all() == []:
+        return None
+    elif len(query.all()) == 1:
+        return query.all()[0]
+
+    return query.all()
+
+
+def manage_working_instance(session, instance):
+    # Make sure we have a session-attached object
+    db_instance = session.merge(instance)
+
+    # Clear working on all others
+    (
+        session.query(Instance)
+        .filter(Instance.name != db_instance.name, Instance.working.is_(True))
+        .update({Instance.working: False}, synchronize_session=False)
+    )
+
+    db_instance.working = True
+    session.commit()
+    return True
+
+
+# session = start_session()
+# sync_filesystem_instances_to_db(session)
+# x = query_session(session, Instance, status="Running")
+# for inst in x:
+#     print({c.name: getattr(inst, c.name) for c in inst.__table__.columns})
+
+
+def print_all_instance_data(session):
+    sync_filesystem_instances_to_db(session=session)
+    x = query_session(session, Instance)
+    for inst in x:
+        print({c.name: getattr(inst, c.name) for c in inst.__table__.columns})

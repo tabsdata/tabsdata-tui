@@ -350,6 +350,11 @@ class InstanceSelectionScreen(Screen):
         if event.button.id == "back-btn":
             self.app.pop_screen()
 
+    def on_show(self) -> None:
+        # called again when you push this screen a
+        #  second time (if reused)
+        self.set_focus(self.list)
+
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         selected = event.item.label
         self.app.handle_api_response(self, selected)  # push instance

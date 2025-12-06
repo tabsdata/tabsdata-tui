@@ -4692,3 +4692,125 @@ MainScreen
 InstanceManagementScreen
 InstanceManagementScreen
 InstanceManagementScreen
+{'name': 'testing745', 'pid': '64513', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:1111', 'cfg_int': '127.0.0.1:2222', 'arg_ext': '1111', 'arg_int': '2222', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'testing456', 'pid': '14601', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:5577', 'cfg_int': '127.0.0.1:2244', 'arg_ext': '5577', 'arg_int': '2244', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'f', 'pid': '63817', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:5566', 'cfg_int': '127.0.0.1:7889', 'arg_ext': '5566', 'arg_int': '7889', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'tabsdata', 'pid': '7232', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:4477', 'cfg_int': '127.0.0.1:8877', 'arg_ext': '4477', 'arg_int': '8877', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'testing', 'pid': '11749', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:4466', 'cfg_int': '127.0.0.1:3344', 'arg_ext': '4466', 'arg_int': '3344', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'new1', 'pid': '15828', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:2457', 'cfg_int': '127.0.0.1:2458', 'arg_ext': '2457', 'arg_int': '2458', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+{'name': 'salesforce', 'pid': '16391', 'working': False, 'status': 'Not Running', 'cfg_ext': '127.0.0.1:2457', 'cfg_int': '127.0.0.1:2458', 'arg_ext': '2457', 'arg_int': '2458', 'private_ip': '127.0.0.1', 'public_ip': '127.0.0.1'}
+MainScreen
+InstanceManagementScreen
+InstanceManagementScreen
+Starting setup tasks…
+[spring_green2][Preparing Instance]:[/] Starting
+[spring_green2][Preparing Instance]:[/] No server preparation steps required (status=Not Running).
+[spring_green2][Preparing Instance]:[/] Finished
+[plum1][Binding Ports]:[/] Starting
+[plum1][Binding Ports]:[/] Updating port config at /Users/danieladayev/.tabsdata/instances/f/workspace/config/proc/regular/apiserver/config/config.yaml
+[plum1][Binding Ports]:[/] Set external port -> Successfully set 127.0.0.1:5566 on addresses
+[plum1][Binding Ports]:[/] Set internal port -> Successfully set 127.0.0.1:7889 on internal_addresses
+[plum1][Binding Ports]:[/] Finished
+[plum1][Connecting to Tabsdata instance]:[/] Starting
+[plum1][Connecting to Tabsdata instance]:[/] Starting Tabsdata server...
+[plum1][Connecting to Tabsdata instance]:[/] Running: tdserver start --instance f
+[plum1][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:21.233717Z  INFO td_supervisor::services::tdserver: Setting up and launching instance...
+[plum1][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:21.233970Z  WARN td_supervisor::services::tdserver: The instance is not up to date. An upgrade is required before starting.
+[plum1][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:21.233974Z  WARN td_supervisor::services::tdserver: To upgrade, run: 'tdserver upgrade --instance <instance>'.
+[plum1][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:21.233975Z  WARN td_supervisor::services::tdserver: (or just 'tdserver upgrade' to upgrade the default instance.)
+[plum1][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:21.233976Z  WARN td_supervisor::services::tdserver: For a dry run before upgrading, use: 'tdserver upgrade --instance <instance>'.
+[plum1][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:21.233978Z  WARN td_supervisor::services::tdserver: (or just 'tdserver upgrade' for the default instance.)
+[plum1][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:21.233979Z  WARN td_supervisor::services::tdserver: It is strongly recommended to back up your instance before proceeding with the upgrade.
+[plum1][Connecting to Tabsdata instance]:[/] Exited with code 201
+[plum1][Connecting to Tabsdata instance]:[/] Start command exited with code 201
+[plum1][Connecting to Tabsdata instance]:[/] Finished
+[orange1][Checking Server Status]:[/] Starting
+[orange1][Checking Server Status]:[/] Checking Tabsdata server status...
+[orange1][Checking Server Status]:[/] Running: tdserver status --instance f
+[orange1][Checking Server Status]:[/] 2025-12-06T02:02:21.521924Z  INFO td_supervisor::services::tdserver: 
+[orange1][Checking Server Status]:[/] 
+[orange1][Checking Server Status]:[/] Tabsdata instance '/Users/danieladayev/.tabsdata/instances/f' not running: '(NotRunning { pid: 63739 }, None)'
+[orange1][Checking Server Status]:[/] 
+[orange1][Checking Server Status]:[/] Exited with code 0
+[orange1][Checking Server Status]:[/] Status command exited with code 0
+[orange1][Checking Server Status]:[/] Updating working instance record in the database...
+[orange1][Checking Server Status]:[/] Finished
+🎉 All tasks complete.
+Task exception was never retrieved
+future: <Task finished name='Task-573' coro=<SequentialTasksScreenTemplate.run_tasks() done, defined at /Users/danieladayev/test-tui/tabsdata-tui/src/tdtui/textual_assets/textual_screens.py:789> exception=AttributeError("'NoneType' object has no attribute 'focus'")>
+Traceback (most recent call last):
+  File "/Users/danieladayev/test-tui/tabsdata-tui/src/tdtui/textual_assets/textual_screens.py", line 804, in run_tasks
+    button.focus()
+    ^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'focus'
+MainScreen
+InstanceManagementScreen
+Starting setup tasks…
+[plum1][Preparing Instance]:[/] Starting
+[plum1][Preparing Instance]:[/] Creating instance gghhf...
+[plum1][Preparing Instance]:[/] Running: tdserver create --instance gghhf
+[plum1][Preparing Instance]:[/] 2025-12-06T02:02:32.346323Z  INFO td_supervisor::services::tdserver: Instance '/Users/danieladayev/.tabsdata/instances/gghhf' successfully created!
+[plum1][Preparing Instance]:[/] 2025-12-06T02:02:32.398282Z  INFO td_supervisor::services::tdserver: Database '/Users/danieladayev/.tabsdata/instances/gghhf/repository/database/tabsdata.db' successfully created!
+[plum1][Preparing Instance]:[/] Exited with code 0
+[plum1][Preparing Instance]:[/] Create command exited with code 0
+[plum1][Preparing Instance]:[/] Finished
+[yellow1][Binding Ports]:[/] Starting
+[yellow1][Binding Ports]:[/] Updating port config at /Users/danieladayev/.tabsdata/instances/gghhf/workspace/config/proc/regular/apiserver/config/config.yaml
+[yellow1][Binding Ports]:[/] Set external port -> Successfully set 127.0.0.1:2457 on addresses
+[yellow1][Binding Ports]:[/] Set internal port -> Successfully set 127.0.0.1:2458 on internal_addresses
+[yellow1][Binding Ports]:[/] Finished
+[orchid][Connecting to Tabsdata instance]:[/] Starting
+[orchid][Connecting to Tabsdata instance]:[/] Starting Tabsdata server...
+[orchid][Connecting to Tabsdata instance]:[/] Running: tdserver start --instance gghhf
+[orchid][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:32.668398Z  INFO td_supervisor::services::tdserver: Setting up and launching instance...
+[orchid][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:37.499874Z  INFO td_supervisor::services::tdserver: Waiting for the instance to complete startup.
+[orchid][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:37.499882Z  INFO td_supervisor::services::tdserver: Use the '--no-wait' flag to skip waiting and proceed immediately.
+[orchid][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:37.744538Z  INFO td_supervisor::services::tdserver: The supervisor hasn’t started after 0s out of 5m. Waiting…
+[orchid][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:42.991120Z  INFO td_supervisor::services::tdserver: The supervisor hasn’t started after 5s out of 5m. Waiting…
+[orchid][Connecting to Tabsdata instance]:[/] 2025-12-06T02:02:48.274691Z  INFO td_supervisor::services::tdserver: Tabsdata instance '/Users/danieladayev/.tabsdata/instances/gghhf' started with pid '22983'
+[orchid][Connecting to Tabsdata instance]:[/] Exited with code 0
+[orchid][Connecting to Tabsdata instance]:[/] Start command exited with code 0
+[orchid][Connecting to Tabsdata instance]:[/] Finished
+[magenta][Checking Server Status]:[/] Starting
+[magenta][Checking Server Status]:[/] Checking Tabsdata server status...
+[magenta][Checking Server Status]:[/] Running: tdserver status --instance gghhf
+[magenta][Checking Server Status]:[/] 2025-12-06T02:02:50.598231Z  INFO td_supervisor::services::tdserver: 
+[magenta][Checking Server Status]:[/] 
+[magenta][Checking Server Status]:[/] ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+[magenta][Checking Server Status]:[/] │ Instance: /Users/danieladayev/.tabsdata/instances/gghhf                                                                                                                                                          │
+[magenta][Checking Server Status]:[/] │ Listening ports: 2457, 2458                                                                                                                                                                                      │
+[magenta][Checking Server Status]:[/] ├─────────┬────────┬───────────────┬────────────┬──────────┬────────┬─────────┬──────┬─────────────────┬────────────────┬──────────────────────────────────────────────────────────────────────────────────────────┤
+[magenta][Checking Server Status]:[/] │ Process │ Parent │ Name          │ Collection │ Function │ Worker │ Attempt │  CPU │ Physical Memory │ Virtual Memory │ Program / Working Directory                                                              │
+[magenta][Checking Server Status]:[/] ├─────────┼────────┼───────────────┼────────────┼──────────┼────────┼─────────┼──────┼─────────────────┼────────────────┼──────────────────────────────────────────────────────────────────────────────────────────┤
+[magenta][Checking Server Status]:[/] │   22983 │      1 │ ► supervisor  │            │          │        │         │   0% │           43 mb │     402,463 mb │ /Users/danieladayev/miniconda3/envs/tdtui_git/bin/supervisor                             │
+[magenta][Checking Server Status]:[/] │         │        │               │            │          │        │         │      │                 │                │ /Users/danieladayev/.tabsdata/instances/gghhf/workspace/work                             │
+[magenta][Checking Server Status]:[/] │   23062 │  22983 │   ► apiserver │            │          │        │         │   0% │           25 mb │     401,557 mb │ /Users/danieladayev/miniconda3/envs/tdtui_git/bin/apiserver                              │
+[magenta][Checking Server Status]:[/] │         │        │               │            │          │        │         │      │                 │                │ /Users/danieladayev/.tabsdata/instances/gghhf/workspace/work/proc/regular/apiserver/work │
+[magenta][Checking Server Status]:[/] │   23064 │  22983 │   ► tdvenv    │            │          │        │         │   0% │           81 mb │     402,002 mb │ /Users/danieladayev/.tabsdata/environments/60c5d09d77/bin/python                         │
+[magenta][Checking Server Status]:[/] │         │        │               │            │          │        │         │      │                 │                │ /Users/danieladayev/.tabsdata/instances/gghhf/workspace/work                             │
+[magenta][Checking Server Status]:[/] │   23085 │  23064 │     ► uv      │            │          │        │         │ 583% │          301 mb │     401,432 mb │ /Users/danieladayev/.tabsdata/environments/60c5d09d77/bin/uv                             │
+[magenta][Checking Server Status]:[/] │         │        │               │            │          │        │         │      │                 │                │ /Users/danieladayev/.tabsdata/instances/gghhf/workspace/work                             │
+[magenta][Checking Server Status]:[/] │   23065 │  22983 │   ► janitor   │            │          │        │         │   0% │           70 mb │     401,982 mb │ /Users/danieladayev/.tabsdata/environments/60c5d09d77/bin/python                         │
+[magenta][Checking Server Status]:[/] │         │        │               │            │          │        │         │      │                 │                │ /Users/danieladayev/.tabsdata/instances/gghhf/workspace/work/proc/regular/janitor/work   │
+[magenta][Checking Server Status]:[/] └─────────┴────────┴───────────────┴────────────┴──────────┴────────┴─────────┴──────┴─────────────────┴────────────────┴──────────────────────────────────────────────────────────────────────────────────────────┘
+[magenta][Checking Server Status]:[/] 
+[magenta][Checking Server Status]:[/] Exited with code 0
+[magenta][Checking Server Status]:[/] Status command exited with code 0
+[magenta][Checking Server Status]:[/] Updating working instance record in the database...
+[magenta][Checking Server Status]:[/] Finished
+[cyan][Logging you In]:[/] Starting
+[cyan][Logging you In]:[/] Logging User into gghhf...
+[cyan][Logging you In]:[/] Running: td login --server 127.0.0.1:2457 --user admin --role sys_admin --password tabsdata
+[cyan][Logging you In]:[/] Login successful.
+[cyan][Logging you In]:[/] Exited with code 0
+[cyan][Logging you In]:[/] Stop command exited with code 0
+[cyan][Logging you In]:[/] Finished
+🎉 All tasks complete.
+Task exception was never retrieved
+future: <Task finished name='Task-1265' coro=<SequentialTasksScreenTemplate.run_tasks() done, defined at /Users/danieladayev/test-tui/tabsdata-tui/src/tdtui/textual_assets/textual_screens.py:789> exception=AttributeError("'NoneType' object has no attribute 'focus'")>
+Traceback (most recent call last):
+  File "/Users/danieladayev/test-tui/tabsdata-tui/src/tdtui/textual_assets/textual_screens.py", line 804, in run_tasks
+    button.focus()
+    ^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'focus'
+MainScreen

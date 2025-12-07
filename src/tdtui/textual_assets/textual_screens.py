@@ -7,6 +7,8 @@ from tdtui.textual_assets.spinners import SpinnerWidget
 from typing import Awaitable, Callable, List, Iterable
 from textual.widgets import RichLog, DirectoryTree
 from textual.containers import Center
+from tdtui.core import input_validators
+from textual import on
 
 import ast
 
@@ -464,6 +466,10 @@ class PortConfigScreen(Screen):
         height: 1fr;
         overflow-y: auto;
     }
+
+#     Input {
+#   height: 5;      
+# }
     """
 
     def __init__(self, instance) -> None:
@@ -480,63 +486,86 @@ class PortConfigScreen(Screen):
     def compose(self) -> ComposeResult:
         yield VerticalScroll(
             CurrentInstanceWidget(self.instance),
-            Label(
-                "What Would Like to call your Tabsdata Instance:",
-                id="title-instance",
+            Vertical(
+                Horizontal(
+                    Label(
+                        "What Would Like to call your Tabsdata Instance:",
+                        id="title-instance",
+                    ),
+                    Input(
+                        placeholder=self.placeholder,
+                        id="instance-input",
+                        classes="inputs",
+                    ),
+                ),
+                Label("", id="instance-message"),
+                id="instance-container",
+                classes="input_container",
             ),
-            Input(placeholder=self.placeholder, id="instance-input"),
-            Label("", id="instance-error"),
-            Label("", id="instance-confirm"),
             Label("Configure Tabsdata ports", id="title"),
-            Label("External port:", id="ext-label"),
-            Input(
-                placeholder=str(self.instance.arg_ext or ""),
-                id="ext-input",
+            Vertical(
+                Horizontal(
+                    Label("External port:", id="ext-label"),
+                    Input(
+                        placeholder=str(self.instance.arg_ext or ""),
+                        restrict=r"\d*",
+                        max_length=5,
+                        validate_on=["submitted"],
+                        validators=[
+                            input_validators.ValidExtPort(self.app, self.instance)
+                        ],
+                        id="ext-input",
+                        classes="inputs",
+                    ),
+                ),
+                Label("", id="ext-message"),
+                id="ext-container",
+                classes="input_container",
             ),
-            Label("", id="ext-error"),
-            Label("", id="ext-confirm"),
-            Label("Internal port:", id="int-label"),
-            Input(
-                placeholder=str(self.instance.arg_int or ""),
-                id="int-input",
+            Vertical(
+                Horizontal(
+                    Label("Internal port:", id="int-label"),
+                    Input(
+                        placeholder=str(self.instance.arg_int or ""),
+                        validate_on=["submitted"],
+                        restrict=r"\d*",
+                        max_length=5,
+                        validators=[
+                            input_validators.ValidIntPort(self.app, self.instance)
+                        ],
+                        id="int-input",
+                        classes="inputs",
+                    ),
+                ),
+                Label("", id="int-message"),
+                id="int-container",
+                classes="input_container",
             ),
-            Label("", id="int-error"),
-            Label("", id="int-confirm"),
             Static(""),
         )
-
         yield Footer()
 
-    def set_visibility(self) -> None:
-        """Decide which step to show first and hide later steps."""
-        is_existing = (
-            self.instance is not None and self.instance.name != "_Create_Instance"
-        )
+    def set_visibility(self):
+        input_containers = self.query(".input_container")
+        instance_container = self.query_one("#instance-container")
+        ext_container = self.query_one("#ext-container")
+        int_container = self.query_one("#int-container")
 
-        # Instance name step
-        show_instance_name = not is_existing
-        self.query_one("#title-instance", Label).display = show_instance_name
-        self.query_one("#instance-input", Input).display = show_instance_name
-        self.query_one("#instance-error", Label).display = show_instance_name
-        self.query_one("#instance-confirm", Label).display = show_instance_name
+        instance_input = self.query_one("#instance-input")
+        ext_input = self.query_one("#ext-input")
+        int_input = self.query_one("#int-input")
 
-        # External port step is hidden until instance name is chosen for new instances
-        show_ext = is_existing
-        self.query_one("#title", Label).display = show_ext
-        self.query_one("#ext-label", Label).display = show_ext
-        self.query_one("#ext-input", Input).display = show_ext
-        self.query_one("#ext-error", Label).display = show_ext
-        self.query_one("#ext-confirm", Label).display = show_ext
+        for i in input_containers:
+            i.display = False
 
-        # Internal port step starts hidden
-        for wid in ("#int-label", "#int-input", "#int-error", "#int-confirm"):
-            self.query_one(wid, Static | Label | Input).display = False
+        if self.instance.name == "_Create_Instance":
+            instance_container.display = True
+            self.set_focus(instance_input)
+            return
 
-        # Focus
-        if show_instance_name:
-            self.set_focus(self.query_one("#instance-input", Input))
-        else:
-            self.set_focus(self.query_one("#ext-input", Input))
+        ext_container.display = True
+        self.set_focus(ext_input)
+        return
 
     def on_mount(self) -> None:
         self.set_visibility()
@@ -544,130 +573,10 @@ class PortConfigScreen(Screen):
     def on_screen_resume(self, event) -> None:
         self.set_visibility()
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        input_id = event.input.id
-        if input_id == "ext-input":
-            self._handle_port("ext", event.input, require_diff=False)
-        elif input_id == "int-input":
-            self._handle_port("int", event.input, require_diff=True)
-        elif input_id == "instance-input":
-            self._handle_instance_name_submitted(event.input)
-
-    # ---------------------------
-    # Shared port flow
-    # ---------------------------
-
-    def _handle_port(self, kind: str, port_input: Input, require_diff: bool) -> None:
-        """
-        kind: "ext" or "int"
-        require_diff: True for internal port, which must differ from arg_ext.
-        """
-        error_label = self.query_one(f"#{kind}-error", Label)
-        confirm_label = self.query_one(f"#{kind}-confirm", Label)
-
-        error_label.update("")
-        confirm_label.update("")
-
-        # Current value on instance, e.g. arg_ext or arg_int
-        current_value = getattr(self.instance, f"arg_{kind}", None)
-
-        value = port_input.value.strip()
-        if value == "":
-            value = current_value
-
-        if not validate_port(value):
-            error_label.update("That is not a valid port number. Please enter 1–65535.")
-            self.set_focus(port_input)
-            port_input.clear()
-            return
-
-        port = int(value)
-
-        # Internal must not equal external
-        if (
-            require_diff
-            and self.instance.arg_ext is not None
-            and port == self.instance.arg_ext
-        ):
-            error_label.update(
-                "Internal port must not be the same as external port. "
-                "Please choose another port."
-            )
-            self.set_focus(port_input)
-            port_input.clear()
-            return
-
-        in_use_by = port_in_use(
-            app=self.app,
-            port=port,
-            current_instance_name=self.instance.name,
-        )
-
-        if in_use_by is not None:
-            error_label.update(
-                f"Port {port} is already in use by instance '{in_use_by}'. "
-                "Please choose a different port."
-            )
-            self.set_focus(port_input)
-            port_input.clear()
-            return
-
-        # Valid, distinct, and free
-        setattr(self.instance, f"arg_{kind}", port)
-        confirm_label.update(
-            Text(
-                f"Selected {'external' if kind == 'ext' else 'internal'} port: {port}",
-                style="bold #22c55e",
-            )
-        )
-
-        # If we just set external, reveal internal inputs
-        if kind == "ext":
-            self.query_one("#int-label", Label).display = True
-            self.query_one("#int-input", Input).display = True
-            self.query_one("#int-error", Label).display = True
-            self.query_one("#int-confirm", Label).display = True
-            self.set_focus(self.query_one("#int-input", Input))
-        else:
-            # Done with both ports, return instance to app
-            self.app.handle_api_response(self, self.instance)
-
-    # ---------------------------
-    # Instance Name flow
-    # ---------------------------
-
-    def _handle_instance_name_submitted(self, instance_input: Input) -> None:
-        instance_error = self.query_one("#instance-error", Label)
-        instance_confirm = self.query_one("#instance-confirm", Label)
-
-        instance_error.update("")
-        instance_confirm.update("")
-
-        value = instance_input.value.strip() or "tabsdata"
-
-        if name_in_use(self.app, value):
-            instance_error.update("That Name is Already in Use. Please Try Another:")
-            self.set_focus(instance_input)
-            instance_input.clear()
-            return
-
-        # Valid and free
-        self.instance.name = value
-        instance_confirm.update(
-            Text(
-                f"Defined an Instance with the following Name: {value}",
-                style="bold #22c55e",
-            )
-        )
-
-        # Reveal external port step and move focus there
-        self.query_one("#title", Label).display = True
-        self.query_one("#ext-label", Label).display = True
-        self.query_one("#ext-input", Input).display = True
-        self.query_one("#ext-error", Label).display = True
-        self.query_one("#ext-confirm", Label).display = True
-
-        self.set_focus(self.query_one("#ext-input", Input))
+    @on(Input.Submitted, ".inputs")
+    def handle_input(self, event: Input.Submitted) -> None:
+        value = event.value
+        source = event
 
 
 @dataclass

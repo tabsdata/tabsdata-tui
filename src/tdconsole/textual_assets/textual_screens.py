@@ -223,7 +223,7 @@ class CurrentInstanceWidget(InstanceWidget):
         if isinstance(inst, str):
             inst = instance_name_to_instance(inst)
         working_instance = self.app.app_query_session("instances", working=True)
-        if working_instance is not None:
+        if working_instance is None:
             self.inst = inst
         else:
             self.inst = working_instance
@@ -475,7 +475,7 @@ class PortConfigScreen(Screen):
 
     def compose(self) -> ComposeResult:
         yield VerticalScroll(
-            CurrentInstanceWidget(self.instance),
+            CurrentInstanceWidget(),
             Vertical(
                 Horizontal(
                     Label(
@@ -876,7 +876,8 @@ class SequentialTasksScreenTemplate(Screen):
 
         # Show “Done” button either way
         footer = self.query_one(Footer)
-        button = await self.mount(Button("Done", id="close-btn"), before=footer)
+        await self.mount(Button("Done", id="close-btn"), before=footer)
+        button = self.query_one("#close-btn")
         button.focus()
 
 

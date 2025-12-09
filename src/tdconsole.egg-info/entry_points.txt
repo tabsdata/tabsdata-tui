@@ -1,2 +1,0 @@
-[console_scripts]
-tdconsole = tdconsole.app_start:run_app

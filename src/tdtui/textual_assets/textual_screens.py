@@ -271,36 +271,7 @@ class LabelItem(ListItem):
         yield self.front
 
 
-class ListScreenTemplate(Screen):
-    def __init__(self, choices=None, id=None, header="Select an Option: "):
-        super().__init__()
-        self.choices = choices
-        if id is not None:
-            self.id = id
-        self.header = header
-        self.app.working_instance = self.app.app_query_session(
-            "instances", working=True
-        )
-
-    def compose(self) -> ComposeResult:
-        with VerticalScroll():
-            if self.header is not None:
-                yield Label(self.header, id="listHeader")
-            yield CurrentInstanceWidget(self.app.working_instance)
-            choiceLabels = [LabelItem(i) for i in self.choices]
-            self.list = ListView(*choiceLabels)
-            yield self.list
-            yield Footer()
-
-    def on_show(self) -> None:
-        # called again when you push this screen a
-        #  second time (if reused)
-        self.set_focus(self.list)
-
-    def on_list_view_selected(self, event: ListView.Selected) -> None:
-        selected = event.item.label
-        logging.info(type(self.screen).__name__)
-        self.app.handle_api_response(self, selected)  # push instance
+# push instance
 
 
 class ListScreenTemplate(Screen):
@@ -332,7 +303,8 @@ class ListScreenTemplate(Screen):
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         selected = event.item.label
         logging.info(type(self.screen).__name__)
-        self.app.handle_api_response(self, selected)  # push instance
+        if selected not in ["Asset Management", "Register a Function"]:
+            self.app.handle_api_response(self, selected)  # push instance
 
 
 class InstanceSelectionScreen(Screen):
@@ -426,6 +398,35 @@ class MainScreen(ListScreenTemplate):
                 "Exit",
             ],
         )
+
+    @on(ListView.Selected)
+    def handle_api_response(self, event: ListView.Selected):
+        value = event.item.label
+        if value == "Asset Management":
+            self.app.push_screen(AssetManagementScreen())
+
+
+class AssetManagementScreen(ListScreenTemplate):
+
+    def __init__(self):
+        super().__init__(
+            choices=[
+                "Register a Function",
+                "Update a Function",
+                "Delete a Function",
+                "Create a Collection",
+                "Delete a Collection",
+                "Delete a Table",
+                "Sample Table Schema",
+                "Sample Table Data" "Exit",
+            ],
+        )
+
+    @on(ListView.Selected)
+    def handle_api_response(self, event: ListView.Selected):
+        value = event.item.label
+        if value == "Register a Function":
+            self.app.push_screen(PyFileTreeScreen())
 
 
 class InstanceManagementScreen(ListScreenTemplate):

@@ -9320,3 +9320,18 @@ Traceback (most recent call last):
     button.focus()
     ^^^^^^^^^^^^
 AttributeError: 'NoneType' object has no attribute 'focus'
+MainScreen
+MainScreen
+MainScreen
+MainScreen
+MainScreen
+MainScreen
+MainScreen
+MainScreen
+AssetManagementScreen
+MainScreen
+MainScreen
+MainScreen
+AssetManagementScreen
+MainScreen
+AssetManagementScreen

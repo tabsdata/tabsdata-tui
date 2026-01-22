@@ -9,11 +9,11 @@ from functools import partial
 from pathlib import Path
 from typing import Awaitable, Callable, Iterable, List, Optional
 
-from rich.align import Align
 from rich.console import Group, RenderableType
 from rich.panel import Panel
 from rich.text import Text
 from sqlalchemy.orm import Session
+from tabsdata.api.tabsdata_server import TabsdataServer
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Center, Container, Horizontal, Vertical, VerticalScroll
@@ -35,13 +35,41 @@ from textual.widgets import (
 )
 from textual.widgets._tree import TreeNode
 
-from tdconsole.core import input_validators
+from tdconsole.core import input_validators, instance_tasks
 from tdconsole.core.find_instances import (
     instance_name_to_instance,
     sync_filesystem_instances_to_db,
 )
 from tdconsole.core.models import Instance
 from tdconsole.textual_assets.spinners import SpinnerWidget
+
+
+class ExitBar(Container):
+    DEFAULT_CSS = """
+    ExitBar {
+        width: 3;
+        min-width: 3;
+        height: 1;
+    }
+    #exit-btn {
+        color: white;
+        background: transparent;
+        width: 3;
+        min-width: 3;
+        height: 1;
+        padding: 0 1;
+    }
+    .exit-spacer {
+        width: 1fr;
+    }
+    """
+
+    def compose(self) -> ComposeResult:
+        yield Button("x", id="exit-btn")
+
+    @on(Button.Pressed, "#exit-btn")
+    def on_exit_pressed(self, event: Button.Pressed) -> None:
+        self.app.exit()
 
 
 class BSOD(Screen):
@@ -96,6 +124,7 @@ class BSOD(Screen):
         )
 
     def compose(self) -> ComposeResult:
+        yield ExitBar()
         with VerticalScroll(id="wrapper"):
             yield Static(" Bad News :() ", id="title")
 
@@ -122,9 +151,6 @@ class BSOD(Screen):
 
     def action_focus_exit(self) -> None:
         self.query_one("#exit-btn", Button).focus()
-
-
-from tdconsole.core import instance_tasks
 
 
 class InstanceWidget(Static):
@@ -158,7 +184,7 @@ class InstanceWidget(Static):
             line1 = f"running on → ext: {inst.arg_ext}"
             line2 = f"running on → int: {inst.arg_int}"
         elif inst.status == "Not Running":
-            status_color = "#ef4444"
+            status_color = "#4c4c4c"
             status_line = f"{inst.name}  ○ Not running"
             line1 = f"configured on → ext: {inst.cfg_ext}"
             line2 = f"configured on → int: {inst.cfg_int}"
@@ -178,47 +204,230 @@ class InstanceWidget(Static):
         return instance_panel
 
 
-class CurrentInstanceWidget(InstanceWidget):
-    inst = reactive(None)
+class InstanceInfoPanel(Horizontal):
+    DEFAULT_CSS = """
+InstanceInfoPanel > Horizontal {
+    height: 10;
+}
+InstanceInfoPanel {
+max-height: 70%;}
 
-    def __init__(self, instance: Optional[str] = None, **kwargs):
-        super().__init__(**kwargs)
-        self.instance = instance
+InstanceInfoPanel .box {
+    height: 1fr;
+    width: 1fr;
+    layout: vertical;
+}
 
-    def render(self) -> RenderableType:
+InstanceInfoPanel .box > ListView {
+    height: 1fr;
+}
+    """
 
-        # inner instance panel
-        instance_panel = self._make_instance_panel()
-
-        header = Align.center(Text("Current Working Instance:", style="bold #22c55e"))
-
-        inner = Group(
-            header,  # spacer
-            Align.center(instance_panel),
-        )
-
-        outer = Panel(
-            inner,
-            border_style="#0f766e",
-            expand=False,
-        )
-        return Align.center(outer)
+    def __init__(self):
+        super().__init__()
+        self.tabsdata_server = None
+        self.instance = None
+        self.collection_list = None
+        self.selected_collection = None
+        self.selected_function = None
+        self.function_list = None
+        self.selected_function = None
+        self.table_list = None
+        self.selected_table = None
+        self.recompile_td_data()
 
     def resolve_working_instance(self, instance=None):
         if isinstance(instance, str):
             instance = instance_name_to_instance(instance)
         sync_filesystem_instances_to_db(app=self.app)
-        working_instance = self.app.app_query_session("instances", working=True)
-        if working_instance is None:
-            self.inst = instance
+        working_instance = self.app.app_query_session(
+            "instances", limit=1, working=True
+        )
+        return working_instance or instance
+
+    def refresh_widget(self):
+        self.selected_collection = None
+        self.selected_function = None
+        self.selected_table = None
+        self.recompile_td_data()
+        self.refresh(recompose=True)
+
+    def recompile_td_data(self):
+        self.instance = self.resolve_working_instance()
+        self.tabsdata_server = self.app.tabsdata_server
+        self.tabsdata_server: TabsdataServer
+        self.collection_list = self.tabsdata_server.list_collections()
+
+        if self.selected_collection:
+            self.function_list = self.tabsdata_server.list_functions(
+                self.selected_collection.name
+            )
+            self.table_list = self.tabsdata_server.list_tables(
+                self.selected_collection.name
+            )
+
+    def compose(self) -> ComposeResult:
+        yield CurrentInstanceWidget(title="Current Instance", classes="box")
+        yield CurrentCollectionsWidget(title="Current Collection", classes="box")
+        yield CurrentFunctionsWidget(
+            title="Available Functions", classes="box collection_dependent"
+        )
+        yield CurrentTablesWidget(
+            title="Available Tables", classes="box collection_dependent"
+        )
+
+    def watch_working_instance(self, old, new):
+        pass
+
+
+class CurrentStateWidgetTemplate(Static):
+    DEFAULT_CSS = """
+    CurrentStateWidgetTemplate {
+        border: round #0f766e;
+        border-title-align: center;
+        border-title-color: #0f766e;
+        content-align: center middle;
+    }
+
+    ListView {
+    max-height: 100%;
+    }
+
+
+    CurrentStateWidgetTemplate > .inner {
+        width: auto;
+    }
+    VerticalScroll { height: 1fr; }
+    ListView ListItem.--highlight {
+        background: #0f766e;
+        color: white;
+    }
+    """
+
+    inst = reactive(None, recompose=True)
+
+    def __init__(
+        self,
+        instance: Optional[str] = None,
+        title: str = "Current Working Instance:",
+        dependency=None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.instance = instance
+        self.title = title
+        self.dependency = dependency
+
+    def generate_internals(self):
+        return Static("null", classes="inner")
+
+    def compose(self):
+        self.border_title = self.title
+        yield self.generate_internals()
+
+
+class CurrentInstanceWidget(CurrentStateWidgetTemplate):
+    def generate_internals(self):
+        instance = self.app.working_instance
+
+        status_color = "#e4e4e6"
+        status_line = "○ No Instance Selected"
+        line1 = "No External Running Port"
+        line2 = "No Internal Running Port"
+
+        if instance is None:
+            pass
+        elif instance.name == "_Create_Instance":
+            status_color = "#1F66D1"
+            status_line = "Create a New Instance"
+            line1 = ""
+            line2 = ""
+        elif instance.status == "Running":
+            status_color = "#22c55e"
+            status_line = f"{instance.name}  ● Running"
+            line1 = f"running on → ext: {instance.arg_ext}"
+            line2 = f"running on → int: {instance.arg_int}"
+        elif instance.status == "Not Running":
+            status_color = "#4c4c4c"
+            status_line = f"{instance.name}  ○ Not running"
+            line1 = f"configured on → ext: {instance.cfg_ext}"
+            line2 = f"configured on → int: {instance.cfg_int}"
+
+        header = Text(status_line, style=f"bold {status_color}")
+        body = Text(f"{line1}\n{line2}", style="#f9f9f9")
+
+        return Static(
+            Panel(Group(header, body), border_style=status_color, expand=False),
+            classes="inner",
+        )
+
+
+class CurrentCollectionsWidget(CurrentStateWidgetTemplate):
+    def generate_internals(self, collections=None):
+        """Converts List to a ListView"""
+        collections = self.parent.collection_list
+        print(collections)
+        choiceLabels = [LabelItem(i.name, i) for i in collections]
+        self.list = ListView(*choiceLabels)
+        return self.list
+
+    @on(ListView.Selected)
+    def handle_collection_selected(self, event: ListView.Selected):
+        event.stop()
+        collection = event.item.label
+        self.parent.selected_collection = collection
+        self.parent.recompile_td_data()
+        widgets_to_refresh = self.app.query_one(".collection_dependent")
+        print([i for i in widgets_to_refresh])
+        self.parent.refresh(recompose=True)
+
+
+class CurrentFunctionsWidget(CurrentStateWidgetTemplate):
+
+    def generate_internals(self, collections=None):
+        """Converts List to a ListView"""
+        collections = self.parent.function_list
+        if collections and len(collections) > 0:
+            choiceLabels = [LabelItem(i.name, i) for i in collections]
         else:
-            self.inst = working_instance
+            choiceLabels = []
+        choiceLabels.append(LabelItem("Create A Function"))
+        self.list = ListView(*choiceLabels)
+
+        self.output = self.list
+        return self.output
+
+    @on(ListView.Selected)
+    def handle_function_selected(self, event: ListView.Selected):
+        event.stop()
+
+
+class CurrentTablesWidget(CurrentStateWidgetTemplate):
+    DEFAULT_CSS = """
+    CurrentTablesWidget ListItem.--highlight {
+        background: #0f766e;
+        color: white;
+    }
+    """
+
+    def generate_internals(self, collections=None):
+        collections = self.parent.table_list
+        choiceLabels = (
+            [LabelItem(i.name, i) for i in collections] if collections else []
+        )
+        choiceLabels.append(LabelItem("Create A Table"))
+        self.list = ListView(*choiceLabels)
+        return self.list
+
+    @on(ListView.Selected)
+    def handle_table_selected(self, event: ListView.Selected):
+        event.stop()
 
 
 class LabelItem(ListItem):
     def __init__(self, label: str, override_label=None) -> None:
         super().__init__()
-        if type(label) == str:
+        if type(label) is str:
             self.front = Label(label)
         else:
             self.front = label
@@ -242,11 +451,7 @@ class ListScreenTemplate(Screen):
 
     def compose(self) -> ComposeResult:
         with VerticalScroll():
-            if self.header is not None:
-                yield Label(self.header, id="listHeader")
-            yield CurrentInstanceWidget(
-                self.app.working_instance, id="CurrentInstanceWidget"
-            )
+            yield InstanceInfoPanel()
             yield self.list_items()
             yield Footer()
 
@@ -263,7 +468,9 @@ class ListScreenTemplate(Screen):
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         selected = event.item.label
-        if selected in self.choices and self.choice_dict[selected] is not None:
+        if selected == "Exit":
+            self.app.exit()
+        elif selected in self.choices and self.choice_dict[selected] is not None:
             screen = self.choice_dict[selected]
             self.app.push_screen(screen())
         else:
@@ -271,8 +478,7 @@ class ListScreenTemplate(Screen):
 
     @on(ScreenResume)
     def refresh_current_instance_widget(self, event: ScreenResume):
-        widget = self.query_one("#CurrentInstanceWidget")
-        widget.resolve_working_instance()
+        self.query_one(InstanceInfoPanel).refresh_widget()
 
 
 class InstanceSelectionScreen(ListScreenTemplate):
@@ -473,8 +679,9 @@ Checkbox:focus > .toggle--button {
         self.instance = instance
 
     def compose(self) -> ComposeResult:
+        yield ExitBar()
         yield VerticalScroll(
-            CurrentInstanceWidget(),
+            InstanceInfoPanel(),
             Vertical(
                 Horizontal(
                     Label(
@@ -766,6 +973,7 @@ class SequentialTasksScreenTemplate(Screen):
             row = TaskRow(task.description, task_id=f"task-{index}")
             self.task_rows.append(row)
 
+        yield ExitBar()
         yield VerticalScroll(
             Vertical(
                 Label("Running setup tasks...", id="tasks-header"),
@@ -966,8 +1174,9 @@ class BindAndStartInstance(SequentialTasksScreenTemplate):
     def conclude_tasks(self, status=None):
         super().conclude_tasks()
         self.instance.working = True
-        self.app.session.merge(self.instance)
+        merged_instance = self.app.session.merge(self.instance)
         self.app.session.commit()
+        self.app.working_instance = merged_instance
 
 
 class StartInstance(SequentialTasksScreenTemplate):
@@ -1235,6 +1444,7 @@ class PyFileTreeScreen(Screen):
 
     def compose(self) -> ComposeResult:
         """Same layout as ListScreenTemplate, but with a DirectoryTree instead of ListView."""
+        yield ExitBar()
         with VerticalScroll():
             if self.header is not None:
                 yield Label(self.header, id="listHeader")

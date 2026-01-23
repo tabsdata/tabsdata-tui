@@ -87,7 +87,7 @@ class NestedMenuApp(App):
                 for attr in inspect(new).mapper.column_attrs
             }
         )
-        if new != old and new != None:
+        if new != old and new is not None:
             self.handle_tabsdata_server_connection()
             print(self.tabsdata_server)
             try:

@@ -209,6 +209,8 @@ def sync_filesystem_instances_to_db(app=None, session=None) -> list[Instance]:
                 and fs_instance.name == working_instance.name
             ):
                 fs_instance.working = True
+            else:
+                fs_instance.working = False
 
             # Try to find existing record in DB
             db_instance = session.query(Instance).filter_by(name=name).first()

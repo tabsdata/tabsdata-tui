@@ -254,11 +254,13 @@ InstanceInfoPanel .box > ListView {
 
     def recompile_td_data(self):
         self.instance = self.resolve_working_instance()
+        print("INSTANCE")
+        print(self.instance)
         self.tabsdata_server = self.app.tabsdata_server
         self.tabsdata_server: TabsdataServer
         self.collection_list = self.tabsdata_server.list_collections()
 
-        if self.selected_collection in self.collection_list:
+        if self.selected_collection in self.collection_list and self.tabsdata_server:
             self.function_list = self.tabsdata_server.list_functions(
                 self.selected_collection.name
             )

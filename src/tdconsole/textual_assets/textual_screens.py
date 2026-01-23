@@ -246,10 +246,10 @@ InstanceInfoPanel .box > ListView {
         return working_instance or instance
 
     def refresh_widget(self):
+        self.recompile_td_data()
         self.selected_collection = None
         self.selected_function = None
         self.selected_table = None
-        self.recompile_td_data()
         self.refresh(recompose=True)
 
     def recompile_td_data(self):
@@ -258,13 +258,16 @@ InstanceInfoPanel .box > ListView {
         self.tabsdata_server: TabsdataServer
         self.collection_list = self.tabsdata_server.list_collections()
 
-        if self.selected_collection:
+        if self.selected_collection in self.collection_list:
             self.function_list = self.tabsdata_server.list_functions(
                 self.selected_collection.name
             )
             self.table_list = self.tabsdata_server.list_tables(
                 self.selected_collection.name
             )
+        else:
+            self.function_list = []
+            self.table_list = []
 
     def compose(self) -> ComposeResult:
         yield CurrentInstanceWidget(title="Current Instance", classes="box")
@@ -377,9 +380,9 @@ class CurrentCollectionsWidget(CurrentStateWidgetTemplate):
         collection = event.item.label
         self.parent.selected_collection = collection
         self.parent.recompile_td_data()
-        widgets_to_refresh = self.app.query_one(".collection_dependent")
-        print([i for i in widgets_to_refresh])
-        self.parent.refresh(recompose=True)
+        widgets_to_refresh = self.screen.query(".collection_dependent")
+        for i in widgets_to_refresh:
+            i.refresh(recompose=True)
 
 
 class CurrentFunctionsWidget(CurrentStateWidgetTemplate):

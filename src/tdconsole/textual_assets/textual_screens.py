@@ -13,13 +13,13 @@ from rich.console import Group, RenderableType
 from rich.panel import Panel
 from rich.text import Text
 from sqlalchemy.orm import Session
-from tabsdata.api.tabsdata_server import TabsdataServer
-from textual import on
+from tabsdata.api.tabsdata_server import Collection, TabsdataServer
+from textual import events, on, work
 from textual.app import ComposeResult
 from textual.containers import Center, Container, Horizontal, Vertical, VerticalScroll
 from textual.events import Key, ScreenResume
 from textual.reactive import reactive
-from textual.screen import Screen
+from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
     Checkbox,
@@ -35,7 +35,7 @@ from textual.widgets import (
 )
 from textual.widgets._tree import TreeNode
 
-from tdconsole.core import input_validators, instance_tasks
+from tdconsole.core import input_validators, instance_tasks, tabsdata_api
 from tdconsole.core.find_instances import (
     instance_name_to_instance,
     sync_filesystem_instances_to_db,
@@ -64,12 +64,19 @@ class ExitBar(Container):
     }
     """
 
+    def __init__(self, *, mode=None, **kwargs):
+        super().__init__(**kwargs)
+        self.mode = mode  # "exit" or "pop"
+
     def compose(self) -> ComposeResult:
         yield Button("x", id="exit-btn")
 
     @on(Button.Pressed, "#exit-btn")
     def on_exit_pressed(self, event: Button.Pressed) -> None:
-        self.app.exit()
+        if self.mode == "dismiss":
+            self.app.screen.dismiss(None)
+        else:
+            self.app.exit()
 
 
 class BSOD(Screen):
@@ -204,6 +211,87 @@ class InstanceWidget(Static):
         return instance_panel
 
 
+from textual import on
+from textual.containers import Container
+from textual.widgets import Static
+
+
+class CollectionModal(ModalScreen):
+    CSS = """
+    CollectionModal {
+        width: 100%;
+        height: 100%;
+        align: center middle;
+        background: rgba(0,0,0,0.25);
+    }
+
+    #popup {
+        width: 60%;
+        height: 80%;
+        border: round $primary;
+        background: $panel;
+        padding: 1 2;
+    }
+
+    #title {
+        margin-bottom: 1;
+    }
+
+    #popup > ListView {
+        width: 100%;
+        height: 1fr;
+    }
+    """
+
+    def __init__(self, server, collection) -> None:
+        super().__init__()
+        self.server = server
+        self.collection = collection
+
+    def compose(self) -> ComposeResult:
+        with Container(id="popup"):
+            yield ExitBar(mode="dismiss")
+            if isinstance(self.collection, Collection):
+                options = ["Delete Collection"]
+                yield Static(
+                    f"What would you like to do with the {self.collection.name} collection?",
+                    id="title",
+                )
+                yield ListView(*[LabelItem(o) for o in options])
+            else:
+                yield Static(
+                    "What would you like to call your collection?",
+                    id="title",
+                )
+                yield Input(
+                    validate_on=["submitted"],
+                    validators=[
+                        input_validators.ValidCollectionName(
+                            self.app, self.app.tabsdata_server
+                        )
+                    ],
+                )
+
+    @on(ListView.Selected)
+    def _picked(self, event: ListView.Selected) -> None:
+        selected = event.item.label
+        if selected == "Delete Collection":
+            server: TabsdataServer = self.server
+            delete_collection = server.delete_collection(self.collection.name)
+        self.dismiss(delete_collection)
+
+    @on(Input.Submitted)
+    def _inputed(self, event: Input.Submitted) -> None:
+        value = event.input.value
+        if event.validation_result.is_valid:
+            server: TabsdataServer = self.server
+            print(value)
+            create_collection = server.create_collection(value)
+            self.dismiss(create_collection)
+        else:
+            self.app.notify(f"{event.validation_result.failure_descriptions}")
+
+
 class InstanceInfoPanel(Horizontal):
     DEFAULT_CSS = """
 InstanceInfoPanel > Horizontal {
@@ -227,14 +315,15 @@ InstanceInfoPanel .box > ListView {
         super().__init__()
         self.tabsdata_server = None
         self.instance = None
-        self.collection_list = None
+        self.collection_list = []
         self.selected_collection = None
         self.selected_function = None
-        self.function_list = None
+        self.function_list = []
         self.selected_function = None
-        self.table_list = None
+        self.table_list = []
         self.selected_table = None
         self.recompile_td_data()
+        tabsdata_api.sync_instance_to_db(self.app)
 
     def resolve_working_instance(self, instance=None):
         if isinstance(instance, str):
@@ -254,22 +343,52 @@ InstanceInfoPanel .box > ListView {
 
     def recompile_td_data(self):
         self.instance = self.resolve_working_instance()
-        print("INSTANCE")
-        print(self.instance)
         self.tabsdata_server = self.app.tabsdata_server
         self.tabsdata_server: TabsdataServer
-        self.collection_list = self.tabsdata_server.list_collections()
+        try:
+            self.collection_list = self.tabsdata_server.list_collections()
 
-        if self.selected_collection in self.collection_list and self.tabsdata_server:
-            self.function_list = self.tabsdata_server.list_functions(
-                self.selected_collection.name
-            )
-            self.table_list = self.tabsdata_server.list_tables(
-                self.selected_collection.name
-            )
-        else:
+            if (
+                self.selected_collection in self.collection_list
+                and self.tabsdata_server
+            ):
+                self.function_list = self.tabsdata_server.list_functions(
+                    self.selected_collection.name
+                )
+                self.table_list = self.tabsdata_server.list_tables(
+                    self.selected_collection.name
+                )
+            else:
+                self.function_list = []
+                self.table_list = []
+        except:
             self.function_list = []
             self.table_list = []
+
+    @on(
+        events.Click,
+        "CurrentCollectionsWidget Label, CurrentCollectionsWidget LabelItem",
+    )
+    async def handle_double_click(self, event: events.Click):
+        if event.button == 1 and getattr(event, "chain", 1) >= 2:
+            if isinstance(event.widget, LabelItem):
+                label = event.widget
+            else:
+                label = event.widget.parent
+            if isinstance(label.label, (Collection, str)):
+                collection = self.handle_modal_response(self.app.tabsdata_server, label)
+                print(collection)
+                self.refresh(recompose=True)
+
+    @work
+    async def handle_modal_response(self, server, label) -> None:
+        print("label is")
+        print(label)
+        print(label.label)
+        result = await self.app.push_screen_wait(
+            CollectionModal(self.app.tabsdata_server, label.label)
+        )
+        return result
 
     def compose(self) -> ComposeResult:
         yield CurrentInstanceWidget(title="Current Instance", classes="box")
@@ -370,9 +489,12 @@ class CurrentInstanceWidget(CurrentStateWidgetTemplate):
 class CurrentCollectionsWidget(CurrentStateWidgetTemplate):
     def generate_internals(self, collections=None):
         """Converts List to a ListView"""
-        collections = self.parent.collection_list
-        print(collections)
-        choiceLabels = [LabelItem(i.name, i) for i in collections]
+        server: TabsdataServer = self.app.tabsdata_server
+        collections = server.list_collections()
+        collections.append("Create a Collection")
+        choiceLabels = [
+            LabelItem(getattr(i, "name", "Create a Collection"), i) for i in collections
+        ]
         self.list = ListView(*choiceLabels)
         return self.list
 
@@ -389,18 +511,21 @@ class CurrentCollectionsWidget(CurrentStateWidgetTemplate):
 
 class CurrentFunctionsWidget(CurrentStateWidgetTemplate):
 
-    def generate_internals(self, collections=None):
+    def generate_internals(self, functions=None):
         """Converts List to a ListView"""
-        collections = self.parent.function_list
-        if collections and len(collections) > 0:
-            choiceLabels = [LabelItem(i.name, i) for i in collections]
-        else:
-            choiceLabels = []
-        choiceLabels.append(LabelItem("Create A Function"))
-        self.list = ListView(*choiceLabels)
+        server: TabsdataServer = self.app.tabsdata_server
+        selected_collection = self.parent.selected_collection
+        try:
+            functions = server.list_functions(selected_collection.name)
+        except:
+            functions = []
 
-        self.output = self.list
-        return self.output
+        functions.append("Create a Function")
+        choiceLabels = [
+            LabelItem(getattr(i, "name", "Create a Function"), i) for i in functions
+        ]
+        self.list = ListView(*choiceLabels)
+        return self.list
 
     @on(ListView.Selected)
     def handle_function_selected(self, event: ListView.Selected):
@@ -416,11 +541,19 @@ class CurrentTablesWidget(CurrentStateWidgetTemplate):
     """
 
     def generate_internals(self, collections=None):
-        collections = self.parent.table_list
-        choiceLabels = (
-            [LabelItem(i.name, i) for i in collections] if collections else []
-        )
-        choiceLabels.append(LabelItem("Create A Table"))
+        """Converts List to a ListView"""
+        server: TabsdataServer = self.app.tabsdata_server
+        selected_collection = self.parent.selected_collection
+
+        try:
+            tables = server.list_tables(selected_collection.name)
+        except:
+            tables = []
+
+        tables.append("Create a Table")
+        choiceLabels = [
+            LabelItem(getattr(i, "name", "Create a Function"), i) for i in tables
+        ]
         self.list = ListView(*choiceLabels)
         return self.list
 
@@ -456,6 +589,7 @@ class ListScreenTemplate(Screen):
 
     def compose(self) -> ComposeResult:
         with VerticalScroll():
+            yield ExitBar()
             yield InstanceInfoPanel()
             yield self.list_items()
             yield Footer()
@@ -849,7 +983,7 @@ Checkbox:focus > .toggle--button {
     @on(Button.Pressed, "#submit-button")
     def handle_submission_request(self, event: Button.Pressed):
         fields = [i for i in self.query("Input") if len(i.validators) > 0]
-        print(fields)
+
         if self.instance.name != "_Create_Instance":
             fields = [i for i in fields if i.id != "instance-input"]
 

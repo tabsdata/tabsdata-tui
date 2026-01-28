@@ -28,6 +28,8 @@ def start_session(db_url: str | None = None):
     session = SessionLocal()
     Base.metadata.create_all(engine)
     sync_filesystem_instances_to_db(session=session)
+    # Base.metadata.drop_all(engine)
+    # Base.metadata.create_all(engine)
     return session, Base
 
 

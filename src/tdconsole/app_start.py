@@ -89,13 +89,6 @@ class NestedMenuApp(App):
         )
         if new != old and new is not None:
             self.handle_tabsdata_server_connection()
-            print(self.tabsdata_server)
-            try:
-                widget = self.screen.query_one("#CurrentInstanceWidget")
-            except Exception:
-                widget = None
-            if widget is not None and hasattr(widget, "resolve_working_instance"):
-                widget.resolve_working_instance()
 
     def handle_tabsdata_server_connection(self):
         self.tabsdata_server = tabsdata_api.initialize_tabsdata_server_connection(self)

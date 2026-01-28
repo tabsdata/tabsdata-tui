@@ -177,7 +177,7 @@ def resolve_working_instance(app=None, session=None):
     )
     if current_working_instance:
         working_instance = current_working_instance
-    elif session.query(Instance).filter_by(working=True).first():
+    elif session.query(Instance).filter_by(working=True, status="Running").first():
         working_instance = session.query(Instance).filter_by(working=True).first()
     else:
         working_instance = None
@@ -224,6 +224,17 @@ def sync_filesystem_instances_to_db(app=None, session=None) -> list[Instance]:
         session.query(Instance).filter(~Instance.name.in_(instance_names)).delete(
             synchronize_session=False
         )
+        if hasattr(app, "working_instance"):
+            working_instance = app.working_instance
+            if hasattr(working_instance, "name"):
+                working_instance_name = working_instance.name
+                db_instance = (
+                    session.query(Instance)
+                    .filter_by(name=working_instance_name)
+                    .first()
+                )
+                if db_instance.status == "Not Running":
+                    app.working_instance = None
 
         session.commit()
 

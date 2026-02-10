@@ -100,6 +100,8 @@ async def upgrade_instance(runner, instance, label=None) -> int:
         / "server-version.yaml"
     )
     instance_version = get_yaml_value(version_path, "version")
+    if instance_version is None:
+        return 0
     tabsdata_version = td.__version__
 
     runner.log_line(
